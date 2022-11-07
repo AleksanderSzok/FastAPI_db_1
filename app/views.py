@@ -23,7 +23,9 @@ def get_shipper(supplier_id: PositiveInt, db: Session = Depends(get_db)):
     return db_supplier
 
 
-@router.get("/suppliers/{supplier_id}/products")
+@router.get(
+    "/suppliers/{supplier_id}/products", response_model=List[schemas.ProductAndCategory]
+)
 def get_products(supplier_id: PositiveInt, db: Session = Depends(get_db)):
     db_products = crud.get_product(db, supplier_id)
     if not db_products:
@@ -69,3 +71,4 @@ def delete_supplier(supplier_id: int, db: Session = Depends(get_db)):
 @router.get("/")
 def start():
     return {"hello": "world"}
+
