@@ -31,15 +31,6 @@ def get_product(db: Session, supplier_id: int):
     return result
 
 
-def get_product_by_supplier_id(db: Session, supplier_id: int):
-    return (
-        db.query(models.Product)
-        .filter(models.Product.SupplierID == supplier_id)
-        .order_by(desc(models.Product.ProductID))
-        .all()
-    )
-
-
 def get_product_aux(query_element):
     return {
         "ProductID": query_element[0].ProductID,

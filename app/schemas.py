@@ -11,7 +11,7 @@ class Supplier(BaseModel):
         orm_mode = True
 
 
-class Supplier_two(BaseModel):
+class SupplierTwo(BaseModel):
     SupplierID: PositiveInt
     CompanyName: Optional[str]
     ContactName: Optional[str]
@@ -65,12 +65,3 @@ class SupplierResponse(SupplierPost):
     SupplierID: PositiveInt
     Fax: Optional[str]
     HomePage: Optional[str]
-
-
-
-class ProductAndCategory(BaseModel):
-    ProductID: PositiveInt
-    ProductName: constr(max_length=40)
-    Category: Category
-    Discontinued: int
-
