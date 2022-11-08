@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import PositiveInt
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from . import crud, schemas, models
@@ -24,8 +25,8 @@ def get_shipper(supplier_id: PositiveInt, db: Session = Depends(get_db)):
 
 
 @router.get("/suppliers/{supplier_id}/products", response_model=List[schemas.Product])
-def get_products(supplier_id: PositiveInt, db: Session = Depends(get_db)):
-    db_products = crud.get_product(db, supplier_id)
+async def get_products(supplier_id: PositiveInt, db: AsyncSession = Depends(get_db)):
+    db_products = await crud.get_product(db, supplier_id)
     if not db_products:
         raise HTTPException(status_code=404, detail="Product not found")
     return db_products

@@ -1,4 +1,6 @@
 from sqlalchemy import desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from . import models
@@ -17,16 +19,16 @@ def get_supplier(db: Session, supplier_id: int):
     )
 
 
-def get_product(db: Session, supplier_id: int):
-    products_and_categories = (
-        db.query(models.Product, models.Category)
+async def get_product(db: AsyncSession, supplier_id: int):
+    query = (
+        select(models.Product, models.Category)
         .filter(
             models.Product.SupplierID == supplier_id,
             models.Category.CategoryID == models.Product.CategoryID,
         )
         .order_by(desc(models.Product.ProductID))
-        .all()
     )
+    products_and_categories = await db.execute(query)
     result = [get_product_aux(element) for element in products_and_categories]
     return result
 
