@@ -12,8 +12,9 @@ router = APIRouter()
 
 
 @router.get("/suppliers", response_model=List[schemas.Supplier])
-def get_suppliers(db: Session = Depends(get_db)):
-    return crud.get_suppliers(db)
+async def get_suppliers(db: Session = Depends(get_db)):
+    suppliers = await crud.get_suppliers(db)
+    return [supplier[0] for supplier in suppliers]
 
 
 @router.get("/suppliers/{supplier_id}", response_model=schemas.SupplierTwo)

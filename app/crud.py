@@ -7,8 +7,9 @@ from . import models
 from . import schemas
 
 
-def get_suppliers(db: Session):
-    return db.query(models.Supplier).order_by(models.Supplier.SupplierID).all()
+async def get_suppliers(db: Session):
+    query = select(models.Supplier).order_by(models.Supplier.SupplierID)
+    return await db.execute(query)
 
 
 def get_supplier(db: Session, supplier_id: int):
