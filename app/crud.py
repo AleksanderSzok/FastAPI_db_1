@@ -1,4 +1,7 @@
+from typing import List, Optional, Tuple, Union, Dict
+
 from sqlalchemy import desc
+from sqlalchemy.engine import ChunkedIteratorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -10,18 +13,19 @@ class AsyncDbManager:
     def __init__(self, session: AsyncSession):
         self.db = session
 
-    async def get_suppliers(self):
+    async def get_suppliers(self) -> List[models.Supplier]:
         query = select(models.Supplier).order_by(models.Supplier.SupplierID)
-        return await self.db.execute(query)
+        suppliers = await self.db.execute(query)
+        return [supplier[0] for supplier in suppliers]
 
-    async def get_supplier(self, supplier_id: int):
+    async def get_supplier(self, supplier_id: int) -> Optional[models.Supplier]:
         query = select(models.Supplier).filter(
             models.Supplier.SupplierID == supplier_id
         )
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_product(self, supplier_id: int):
+    async def get_product(self, supplier_id: int) -> List[Dict[str, Union[str, int]]]:
         query = (
             select(models.Product, models.Category)
             .filter(
@@ -35,7 +39,9 @@ class AsyncDbManager:
         return result
 
     @staticmethod
-    def get_product_aux(query_element):
+    def get_product_aux(
+        query_element: Tuple[Union[models.Product, models.Category]]
+    ) -> Dict[str, Union[str, int]]:
         return {
             "ProductID": query_element[0].ProductID,
             "ProductName": query_element[0].ProductName,
@@ -46,13 +52,15 @@ class AsyncDbManager:
             "Discontinued": query_element[0].Discontinued,
         }
 
-    async def post_supplier(self, item: schemas.SupplierPost):
+    async def post_supplier(self, item: schemas.SupplierPost) -> models.Supplier:
         db_item = models.Supplier(**item.dict())
         self.db.add(db_item)
         await self.db.commit()
         return db_item
 
-    async def put_supplier(self, item: schemas.SupplierPost, supplier_id: int):
+    async def put_supplier(
+        self, item: schemas.SupplierPost, supplier_id: int
+    ) -> Optional[models.Supplier]:
         supplier = await self.get_supplier(supplier_id=supplier_id)
         if not supplier:
             return
