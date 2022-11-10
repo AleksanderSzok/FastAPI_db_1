@@ -1,7 +1,6 @@
 from typing import List, Optional, Tuple, Union, Dict
 
 from sqlalchemy import desc
-from sqlalchemy.engine import ChunkedIteratorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -10,8 +9,8 @@ from . import schemas
 
 
 class AsyncDbManager:
-    def __init__(self, session: AsyncSession):
-        self.db = session
+    def __init__(self):
+        self.db = None
 
     async def get_suppliers(self) -> List[models.Supplier]:
         query = select(models.Supplier).order_by(models.Supplier.SupplierID)
@@ -70,3 +69,10 @@ class AsyncDbManager:
 
         await self.db.commit()
         return supplier
+
+
+def async_dbmanager_factory(
+    session: AsyncSession, _singleton: AsyncDbManager = AsyncDbManager()
+) -> AsyncDbManager:
+    _singleton.db = session
+    return _singleton
