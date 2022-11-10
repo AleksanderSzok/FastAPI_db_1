@@ -6,57 +6,59 @@ from . import models
 from . import schemas
 
 
-async def get_suppliers(db: AsyncSession):
-    query = select(models.Supplier).order_by(models.Supplier.SupplierID)
-    return await db.execute(query)
+class AsyncDbManager:
+    def __init__(self, session: AsyncSession):
+        self.db = session
 
+    async def get_suppliers(self):
+        query = select(models.Supplier).order_by(models.Supplier.SupplierID)
+        return await self.db.execute(query)
 
-async def get_supplier(db: AsyncSession, supplier_id: int):
-    query = select(models.Supplier).filter(models.Supplier.SupplierID == supplier_id)
-    result = await db.execute(query)
-    return result.scalar_one_or_none()
-
-
-async def get_product(db: AsyncSession, supplier_id: int):
-    query = (
-        select(models.Product, models.Category)
-        .filter(
-            models.Product.SupplierID == supplier_id,
-            models.Category.CategoryID == models.Product.CategoryID,
+    async def get_supplier(self, supplier_id: int):
+        query = select(models.Supplier).filter(
+            models.Supplier.SupplierID == supplier_id
         )
-        .order_by(desc(models.Product.ProductID))
-    )
-    products_and_categories = await db.execute(query)
-    result = [get_product_aux(element) for element in products_and_categories]
-    return result
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
 
+    async def get_product(self, supplier_id: int):
+        query = (
+            select(models.Product, models.Category)
+            .filter(
+                models.Product.SupplierID == supplier_id,
+                models.Category.CategoryID == models.Product.CategoryID,
+            )
+            .order_by(desc(models.Product.ProductID))
+        )
+        products_and_categories = await self.db.execute(query)
+        result = [self.get_product_aux(element) for element in products_and_categories]
+        return result
 
-def get_product_aux(query_element):
-    return {
-        "ProductID": query_element[0].ProductID,
-        "ProductName": query_element[0].ProductName,
-        "Category": {
-            "CategoryID": query_element[1].CategoryID,
-            "CategoryName": query_element[1].CategoryName,
-        },
-        "Discontinued": query_element[0].Discontinued,
-    }
+    @staticmethod
+    def get_product_aux(query_element):
+        return {
+            "ProductID": query_element[0].ProductID,
+            "ProductName": query_element[0].ProductName,
+            "Category": {
+                "CategoryID": query_element[1].CategoryID,
+                "CategoryName": query_element[1].CategoryName,
+            },
+            "Discontinued": query_element[0].Discontinued,
+        }
 
+    async def post_supplier(self, item: schemas.SupplierPost):
+        db_item = models.Supplier(**item.dict())
+        self.db.add(db_item)
+        await self.db.commit()
+        return db_item
 
-async def post_supplier(db: AsyncSession, item: schemas.SupplierPost):
-    db_item = models.Supplier(**item.dict())
-    db.add(db_item)
-    await db.commit()
-    return db_item
+    async def put_supplier(self, item: schemas.SupplierPost, supplier_id: int):
+        supplier = await self.get_supplier(supplier_id=supplier_id)
+        if not supplier:
+            return
+        for k, v in item.dict().items():
+            if v:
+                setattr(supplier, k, v)
 
-
-async def put_supplier(db: AsyncSession, item: schemas.SupplierPost, supplier_id: int):
-    supplier = await get_supplier(db=db, supplier_id=supplier_id)
-    if not supplier:
-        return
-    for k, v in item.dict().items():
-        if v:
-            setattr(supplier, k, v)
-
-    await db.commit()
-    return supplier
+        await self.db.commit()
+        return supplier
