@@ -11,5 +11,14 @@ services:
       - ./:/home/app/
     ports:
       - "5555:5432"
+
+  fastapi_app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
 volumes:
   postgres:
