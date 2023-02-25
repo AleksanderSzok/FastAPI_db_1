@@ -70,6 +70,14 @@ class AsyncDbManager:
         await self.db.commit()
         return supplier
 
+    async def delete_supplier(self, supplier_id: int) -> Optional[models.Supplier]:
+        supplier = await self.get_supplier(supplier_id=supplier_id)
+        if not supplier:
+            return
+        await self.db.delete(supplier)
+        await self.db.commit()
+        return supplier
+
 
 def async_dbmanager_factory(
     session: AsyncSession, _singleton: AsyncDbManager = AsyncDbManager()
